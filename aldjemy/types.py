@@ -12,7 +12,8 @@ def varchar(field):
 
 
 def foreign_key(field):
-    target = field.related.parent_model._meta
+    target = field.rel.field if hasattr(field.rel, 'field') else field.rel.to
+    target = target._meta
     target_table = target.db_table
     target_pk = target.pk.column
     return types.Integer, ForeignKey('%s.%s' % (target_table, target_pk))
