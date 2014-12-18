@@ -1,17 +1,27 @@
+from django.utils.importlib import import_module
 from sqlalchemy import orm
 from django.db.models.fields.related import (ForeignKey, OneToOneField,
         ManyToManyField)
 from django.db import connections, router
 from django.db.backends import signals
+from sqlalchemy.orm import Query
 
 from .core import get_tables, get_engine, Cache
 from .table import get_django_models
+from django.conf import settings
+
+
+def import_from_package(path):
+    package, name = path.rsplit('.', 1)
+    module = import_module(package)
+    return getattr(module, name)
 
 
 def get_session(alias='default'):
     connection = connections[alias]
     if not hasattr(connection, 'sa_session'):
-        session = orm.create_session()
+        query_cls = import_from_package(settings['ALDJEMY_QUERY_CLS']) if 'ALDJEMY_QUERY_CLS' in settings else Query
+        session = orm.create_session(query_cls=query_cls)
         session.bind = get_engine(alias)
         connection.sa_session = session
     return connection.sa_session
