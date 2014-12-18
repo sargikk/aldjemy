@@ -20,7 +20,7 @@ def import_from_package(path):
 def get_session(alias='default'):
     connection = connections[alias]
     if not hasattr(connection, 'sa_session'):
-        query_cls = import_from_package(settings['ALDJEMY_QUERY_CLS']) if 'ALDJEMY_QUERY_CLS' in settings else Query
+        query_cls = import_from_package(settings.ALDJEMY_QUERY_CLS) if hasattr(settings, 'ALDJEMY_QUERY_CLS') else Query
         session = orm.create_session(query_cls=query_cls)
         session.bind = get_engine(alias)
         connection.sa_session = session
@@ -44,7 +44,11 @@ def _extract_model_attrs(model, sa_models):
     for fk in rel_fields:
         if not fk.column in table.c and not isinstance(fk, ManyToManyField):
             continue
-        parent_model = fk.related.parent_model._meta
+        try:
+            parent_model = fk.related.parent_model._meta
+        except AttributeError, e:
+            print "Warning aldjemy: can't convert {} for model {}".format(fk, model)
+            continue
         p_table = tables[parent_model.db_table]
         p_name = parent_model.pk.column
 
