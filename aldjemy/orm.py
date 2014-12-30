@@ -105,12 +105,13 @@ def prepare_models():
 
     for model in models:
         name = model._meta.db_table
-        if 'id' not in sa_models[name].__dict__:
+        if not model._meta.proxy and not model._meta.abstract:
             table = tables[name]
             attrs = _extract_model_attrs(model, sa_models)
             name = model._meta.db_table
             orm.mapper(sa_models[name], table, attrs)
         model.sa = sa_models[name]
+        model.sa.django_model = model
 
     Cache.models = sa_models
 
