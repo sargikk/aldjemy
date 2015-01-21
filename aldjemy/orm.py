@@ -1,3 +1,4 @@
+from threading import Lock
 from django.utils.importlib import import_module
 from sqlalchemy import orm
 from django.db.models.fields.related import (ForeignKey, OneToOneField,
@@ -5,6 +6,7 @@ from django.db.models.fields.related import (ForeignKey, OneToOneField,
 from django.db import connections, router
 from django.db.backends import signals
 from sqlalchemy.orm import Query
+from sqlalchemy.util import classproperty
 
 from .core import get_tables, get_engine, Cache
 from .table import get_django_models
@@ -114,6 +116,22 @@ def prepare_models():
         model.sa.django_model = model
 
     Cache.models = sa_models
+
+
+sa_init_lock = Lock()
+
+
+def sa(cls):
+    with sa_init_lock:
+        prepare_models()
+        return cls.sa
+
+
+def prepare_models_lazy():
+    models = get_django_models()
+
+    for model in models:
+        model.sa = classproperty(sa)
 
 
 class BaseSQLAModel(object):

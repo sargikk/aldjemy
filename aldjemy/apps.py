@@ -4,7 +4,7 @@ try:
 except ImportError:
     pass
 
-from .orm import prepare_models
+from .orm import prepare_models_lazy
 
 
 if VERSION >= (1, 7):
@@ -14,4 +14,4 @@ if VERSION >= (1, 7):
 
         def ready(self):
             # Django App registry is ready. Patch models.
-            prepare_models()
+            prepare_models_lazy()
