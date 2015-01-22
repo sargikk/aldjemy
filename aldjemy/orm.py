@@ -1,3 +1,4 @@
+import logging
 from threading import Lock
 from django.utils.importlib import import_module
 from sqlalchemy import orm
@@ -34,6 +35,16 @@ def new_session(sender, connection, **kw):
 signals.connection_created.connect(new_session)
 
 
+def get_logger():
+    logger = logging.getLogger('Aldjemy')
+    if not logger.handlers:
+        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        handler = logging.StreamHandler()
+        handler.setFormatter(formatter)
+        logger.handlers = [handler]
+    return logger
+
+
 def _extract_model_attrs(model, sa_models):
     tables = get_tables()
 
@@ -49,7 +60,7 @@ def _extract_model_attrs(model, sa_models):
         try:
             parent_model = fk.related.parent_model._meta
         except AttributeError, e:
-            print "Warning aldjemy: can't convert {} for model {}".format(fk, model)
+            get_logger().info("can't convert {} for model {}".format(fk, model))
             continue
         p_table = tables[parent_model.db_table]
         p_name = parent_model.pk.column
